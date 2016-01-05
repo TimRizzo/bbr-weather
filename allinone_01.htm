@@ -1,0 +1,248 @@
+<html>
+<head>
+<title>thelittlewaves Calculator</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, maximum-scale=1.0, minimum-scale=1.0, initial-scale=1.0" />
+<meta name="description" content="A calculator with thelittlewaves visual theme">
+<meta name="keywords" content="calculator">
+<style>
+@import url(https://fonts.googleapis.com/css?family=Raleway:400,200);
+
+@import url(https://fonts.googleapis.com/css?family=Lobster);
+
+body {
+  height: 100%;
+  overflow: auto;
+  margin: 0;  
+  background-color: #EEE;
+  -webkit-overflow-scrolling: touch;
+  opacity: 1;
+}
+
+#wrapper {
+  margin: 0 auto;
+  max-width: 400px;   
+}
+
+#content {      
+    margin: 20px;
+    padding: 10px;
+    font-size: 20px;    
+    font-weight: 400;
+    font-family: 'Raleway', Verdana, sans-serif;
+    background: #444;
+    -moz-border-radius: 15px;
+    -webkit-border-radius: 15px;
+    border-radius: 15px;    
+    color: #DDD; 
+}
+
+#app-title {  
+  font-family: Lobster, Arial, sans serif;
+  font-size: 30px;
+  color: #9fac68;
+  text-align: center;
+}
+
+#app-body  {
+  height: 465px;
+  background: url('http://thelittlewaves.com/bbr-weather/bbr_logo.png') no-repeat center center fixed;
+  text-align: center;
+}
+
+#units {  
+  font-size: 12px;
+  line-height: 20px;
+}
+
+#units a {
+  color: #9fac68;
+}
+
+#app-location {  
+}
+
+#app-icon {  
+}
+
+#app-temperature {  
+  font-family: Arial, sans serif;
+  font-size: 70px;  
+}
+
+#app-weather-descrip {  
+  font-size: .7em;
+}
+
+#app-humidity {  
+}
+
+#app-wind {  
+}
+
+#app-sunpos {  
+}
+
+
+@media only screen and (min-width: 720px) and (max-width: 1039px) {
+
+}
+
+@media only screen and (max-width: 719px) { 
+  
+}
+
+</style>
+</head>
+<body>
+    <div id="wrapper">
+  <div id="content">    
+    <div id="app-title">BeetBeetRunner Weather</div>
+    <div id="app-body">
+      <div id="units">
+      [<a href="#" id="imp">IMPERIAL</a>]&nbsp;&nbsp;[<a href="#" id="metric">METRIC</a>]
+      </div>
+      <div id="app-location">
+        Location
+      </div>
+      <div id="app-weather-descrip">
+        Nothing is happening.
+      </div>
+      <div id="app-icon">  
+      </div>        
+      <div id="app-temperature">
+        Temp
+      </div>
+      <div id="app-humidity">[humidity]</div>
+      <div id="app-wind">[wind]</div>          
+      <div id="app-sunpos">     
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+<script>
+$(document).ready(function() {
+  
+var tempLabel = "F", lat, lon;   
+getLocation();
+getWeather("imperial", lat, lon);
+  
+// Change Units  
+$("#imp").click(function() {
+  getWeather("imperial", lat, lon);
+  tempLabel = "F";
+});  
+$("#metric").click(function() {
+  getWeather("metric", lat, lon);
+  tempLabel = "C";
+});
+  
+function getLocation() {
+    $.post("https://www.googleapis.com/geolocation/v1/geolocate?key=AIzaSyC5-vUeLc2nIhrcGTvqQFxKZPtq527U1c8", function(data) {     
+    lat = data.location.lat;
+    lon = data.location.lng;
+  }); 
+}
+
+function getWeather(units, lat, lon) {
+  
+  // Retrieve Weather Info
+  $.getJSON("http://api.openweathermap.org/data/2.5/weather?lat=" + lat + "&lon=" + lon + "&units=" + units + "&APPID=028a466395c9380d0b257478514258c3", function(json) {  
+
+  // Convert Sunrise Time
+  var sunrise = new Date(json.sys.sunrise * 1000);
+  var srHours = sunrise.getHours();
+  var srMinutes = "0" + sunrise.getMinutes();
+  var srSeconds = "0" + sunrise.getSeconds();
+  var srTime = srHours + ':' + srMinutes.substr(-2) + ':' + srSeconds.substr(-2);
+    
+  // Convert Sunset Time
+  var sunset = new Date(json.sys.sunset * 1000);  
+  var ssHours = sunset.getHours();  
+  var ssMinutes = "0" + sunset.getMinutes();
+  var ssSeconds = "0" + sunset.getSeconds();
+  var ssTime = ssHours + ':' + ssMinutes.substr(-2) + ':' + ssSeconds.substr(-2);
+    
+  // Convert Current Time
+  var currentTime = new Date(); 
+  var currentTimestamp = Date.now() / 1000;
+  var hours = currentTime.getHours();  
+  var minutes = "0" + currentTime.getMinutes();
+  var seconds = "0" + currentTime.getSeconds();
+  var time = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+    
+  // Calculate Time Until Sunrise/Sunset   
+  var tilSunrise = json.sys.sunrise - currentTimestamp;  
+  var tilSunset = json.sys.sunset - currentTimestamp;
+  var tsHours = Math.floor(tilSunset / 3600);  
+  var tsMinutes = "0" + Math.floor((tilSunset - tsHours * 3600) / 60);  
+  var tsTime = tsHours + 'h ' + tsMinutes.substr(-2) + "min"; 
+  var trHours = Math.floor(tilSunrise / 3600);  
+  var trMinutes = "0" + Math.floor((tilSunrise - trHours * 3600) / 60);  
+  var trTime = trHours + 'h ' + trMinutes.substr(-2) + "min";  
+    
+  // Build HTML output
+  $("#app-location").html(json.name);
+  $("#app-icon").html("<img src='http://openweathermap.org/img/w/" + json.weather[0].icon + ".png'>");
+  $("#app-weather-descrip").html(json.weather[0].description);  
+  $("#app-temperature").html(Math.floor(json.main.temp) + tempLabel);
+  $("#app-humidity").html(json.main.humidity + "%");
+  $("#app-wind").html(json.wind.speed + " " + compassDir(json.wind.deg));
+    
+  if (tilSunrise >= 0) {
+    $("#app-sunpos").html(trTime+" til daybreak<br>");
+  } else if (tilSunset >= 0) {
+    $("#app-sunpos").html(tsTime+" til sunset<br>");
+  } else {
+    $("#app-sunpos").html("It's headlamp time!<br>");
+  }   
+    
+});
+}
+  
+  // Calculate Wind Direction  
+  function compassDir(degrees) {
+    if (degrees >= 11.25 && degrees < 33.75) {
+      return "NNE";
+    } else if (degrees >= 33.75 && degrees < 56.25) {
+      return "NE";
+    } else if (degrees >= 56.25 && degrees < 78.75) {
+      return "ENE";
+    } else if (degrees >= 78.75 && degrees < 101.25) {
+      return "E";
+    } else if (degrees >= 101.25 && degrees < 123.75) {
+      return "ESE";
+    } else if (degrees >= 123.75 && degrees < 146.25) {
+      return "SE";
+    } else if (degrees >= 146.25 && degrees < 168.75) {
+      return "SSE";
+    } else if (degrees >= 168.75 && degrees < 191.25) {
+      return "S";
+    } else if (degrees >= 191.25 && degrees < 213.75) {
+      return "SSW";
+    } else if (degrees >= 213.75 && degrees < 236.25) {
+      return "SW";
+    } else if (degrees >= 236.25 && degrees < 258.75) {
+      return "WSW";
+    } else if (degrees >= 258.75 && degrees < 281.25) {
+      return "W";
+    } else if (degrees >= 281.25 && degrees < 303.75) {
+      return "WNW";
+    } else if (degrees >= 303.75 && degrees < 326.25) {
+      return "NW";
+    } else if (degrees >= 326.25 && degrees < 348.75) {
+      return "NNW";
+    } else if ((degrees >= 348.75 && degrees <= 360) || 
+               (degrees >= 0 && degrees < 11.25)) {
+      return "N";
+    } else {
+      return "";
+    }
+  }   
+
+});
+</script>
+</body>
+</html>
